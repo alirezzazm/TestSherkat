@@ -1,5 +1,7 @@
 # Sensor Readings Service
 
+[نسخه فارسی](README.fa.md)
+
 A small backend service that ingests numeric sensor readings from `data/readings.jsonl`,
 cleans duplicate and invalid records, and exposes time-based aggregation of the data
 through an HTTP API with Swagger.
