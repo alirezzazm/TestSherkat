@@ -1,79 +1,88 @@
-# Sensor Readings Service
+<div dir="rtl">
 
-[نسخه فارسی](README.fa.md)
+# سرویس قرائت‌های سنسور
 
-A small backend service that ingests numeric sensor readings from `data/readings.jsonl`,
-cleans duplicate and invalid records, and exposes time-based aggregation of the data
-through an HTTP API with Swagger.
+یک سرویس بک‌اند کوچک که قرائت‌های عددی سنسورها را از فایل `data/readings.jsonl` می‌خواند، رکوردهای تکراری و نامعتبر را پاک‌سازی می‌کند و تجمیع زمانی داده‌ها را از طریق یک API با Swagger در اختیار می‌گذارد.
 
-Built with **.NET 10** (C#), ASP.NET Core and xUnit.
+ساخته‌شده با **.NET 10** (سی‌شارپ)، ASP.NET Core و xUnit.
 
-## How to run
+## نحوه اجرا
 
-You need the .NET 10 SDK (https://dotnet.microsoft.com/download).
+به SDK دات‌نت ۱۰ نیاز دارید (https://dotnet.microsoft.com/download).
+
+<div dir="ltr">
 
 ```bash
 dotnet run --project src/SensorReadings.Api
 ```
 
-The service ingests the file once at startup (you will see the count report in the
-console logs) and then serves requests. Swagger UI is available at:
+</div>
+
+سرویس هنگام استارت، فایل را یک بار پردازش می‌کند (گزارش شمارش را در لاگ کنسول می‌بینید) و بعد آماده پاسخ‌گویی است. رابط Swagger اینجاست:
+
+<div dir="ltr">
 
 ```
 http://localhost:5280/swagger
 ```
 
-The path to the input file is configured in `src/SensorReadings.Api/appsettings.json`
-(`Readings:FilePath`, relative to the API project directory).
+</div>
 
-## How to run the tests
+مسیر فایل ورودی در `src/SensorReadings.Api/appsettings.json` با کلید `Readings:FilePath` تنظیم می‌شود (نسبت به پوشه پروژه API).
+
+## نحوه اجرای تست‌ها
+
+<div dir="ltr">
 
 ```bash
 dotnet test
 ```
 
-There are 28 unit tests covering validation, deduplication and aggregation. They test
-the domain project only and need no file, database or web host. Each test class starts
-with a comment listing the assumptions it verifies.
+</div>
+
+۲۸ تست یونیت برای اعتبارسنجی، حذف تکراری‌ها و تجمیع نوشته شده است. تست‌ها فقط پروژه دامنه را پوشش می‌دهند و به هیچ فایل، دیتابیس یا وب‌هاستی نیاز ندارند. ابتدای هر کلاس تست، فرضیاتی که آن کلاس بررسی می‌کند به‌صورت کامنت نوشته شده است.
+
+همین build و تست‌ها با هر push از طریق GitHub Actions هم اجرا می‌شوند (`.github/workflows/ci.yml`).
 
 ## API
 
 ### `GET /api/aggregations`
 
-Aggregates the readings of one device/metric into fixed-size time buckets.
+قرائت‌های یک دستگاه/متریک را در باکت‌های زمانی هم‌اندازه تجمیع می‌کند.
 
-| Parameter | Example | Notes |
+| پارامتر | مثال | توضیح |
 |---|---|---|
-| `deviceId` | `PUMP-01` | required |
-| `metric` | `temperature` | required |
-| `from` | `2025-06-01T08:00:00Z` | inclusive |
-| `to` | `2025-06-01T08:35:00Z` | exclusive |
-| `bucketSeconds` | `300` | optional, default 60 |
+| `deviceId` | `PUMP-01` | اجباری |
+| `metric` | `temperature` | اجباری |
+| `from` | `2025-06-01T08:00:00Z` | شامل می‌شود |
+| `to` | `2025-06-01T08:35:00Z` | شامل نمی‌شود |
+| `bucketSeconds` | `300` | اختیاری، پیش‌فرض ۶۰ |
 
-Example:
+مثال:
+
+<div dir="ltr">
 
 ```
 GET /api/aggregations?deviceId=PUMP-01&metric=temperature&from=2025-06-01T08:00:00Z&to=2025-06-01T08:35:00Z&bucketSeconds=300
 ```
 
-Returns one entry per bucket with `bucketStart`, `count`, `average`, `min` and `max`.
+</div>
 
-Contract decisions (all covered by tests):
+برای هر باکت یک آیتم برمی‌گرداند شامل `bucketStart`، `count`، `average`، `min` و `max`.
 
-- The range is half-open `[from, to)`: a reading exactly at `from` is included, one
-  exactly at `to` is not. This way consecutive queries never double-count a reading.
-- Buckets are aligned to `from`; a reading sitting exactly on a bucket boundary belongs
-  to the bucket that starts there. If the range is not divisible by the bucket size,
-  the last bucket is simply cut short by `to`.
-- **Empty buckets are returned with `count: 0`** and null statistics, so the caller
-  always gets a contiguous series that can be charted directly without filling gaps.
-- A query may produce at most 10,000 buckets; anything above that returns 400. This
-  protects the service from a huge range combined with a tiny bucket size.
-- Bad input (inverted range, non-positive bucket size) returns 400 with a message.
+تصمیم‌های قرارداد API (همگی تست دارند):
+
+- بازه نیم‌باز `[from, to)` است: قرائتی که دقیقاً روی `from` باشد شامل می‌شود و قرائت روی `to` نه. به این ترتیب کوئری‌های پشت‌سرهم هیچ قرائتی را دو بار نمی‌شمارند.
+- باکت‌ها با `from` تراز می‌شوند؛ قرائتی که دقیقاً روی مرز باکت باشد به باکتی تعلق دارد که از همان لحظه شروع می‌شود. اگر طول بازه بر اندازه باکت بخش‌پذیر نباشد، باکت آخر توسط `to` کوتاه می‌شود.
+- **باکت‌های خالی با `count: 0`** و آمار null برگردانده می‌شوند تا خروجی همیشه یک سری پیوسته باشد و مثلاً مستقیم قابل رسم روی نمودار باشد.
+- هر کوئری حداکثر می‌تواند ۱۰٬۰۰۰ باکت تولید کند؛ بیشتر از آن خطای 400 برمی‌گردد. این محدودیت سرویس را در برابر بازه بزرگ با باکت خیلی کوچک محافظت می‌کند.
+- ورودی نامعتبر (بازه برعکس، اندازه باکت صفر یا منفی) با پیام مناسب 400 برمی‌گرداند.
 
 ### `GET /api/ingestion/report`
 
-The count report of the startup ingestion run. For the provided file it returns:
+گزارش شمارش پردازش هنگام استارت. برای فایل داده‌شده این خروجی را می‌دهد:
+
+<div dir="ltr">
 
 ```json
 {
@@ -93,108 +102,71 @@ The count report of the startup ingestion run. For the provided file it returns:
 }
 ```
 
-The invariant `totalLines = storedReadings + duplicatesRemoved + invalidRejected` always
-holds. The same summary is logged at the end of processing, and every rejected line and
-every conflicting duplicate is logged individually with its line number.
+</div>
 
-## What I found in the data
+این برابری همیشه برقرار است: `totalLines = storedReadings + duplicatesRemoved + invalidRejected`. همین خلاصه در پایان پردازش لاگ می‌شود و هر خط ردشده و هر تکراریِ متعارض هم جداگانه با شماره خط لاگ می‌شود.
 
-Before writing any code I went through the file to see what "messy" actually meant here.
-Roughly 2,150 lines, and:
+## چه چیزهایی در داده‌ها پیدا شد
 
-- **38 exact-key duplicates** — same `(deviceId, metric, ts, seq)`. 30 of them also have
-  the same value (plain resends), but **8 carry a different value** for the same key,
-  which forces an explicit conflict policy (see below).
-- **1 truncated line** that is not valid JSON.
-- **2 broken timestamps**: one without a timezone (`2025-06-01T08:00:05`) and one
-  impossible date (`2025-06-31T08:04:10Z` — June has 30 days).
-- **2 sentinel values**: a temperature of `1000000` and a vibration of `-9999`. These are
-  obviously device error markers, not measurements.
-- **Missing/null fields**: a null `value`, a null `metric`, a missing and an empty
-  `deviceId`, a null `seq`, and a `value` of the string `"NaN"`.
-- The file is **not sorted by time** (about half of the adjacent line pairs go backwards).
+قبل از نوشتن کد، فایل را بررسی کردم تا ببینم «کثیف بودن» داده دقیقاً یعنی چه. حدود ۲۱۵۰ خط، و:
 
-## Cleaning policies and why
+- **۳۸ رکورد با کلید تکراری** — همان `(deviceId, metric, ts, seq)`. ۳۰ تای آن‌ها مقدارشان هم یکی است (ارسال مجدد ساده)، اما **۸ تا برای یک کلید مقدار متفاوت دارند** که یک سیاست صریح برای تعارض می‌طلبد (پایین‌تر توضیح داده‌ام).
+- **۱ خط ناقص** که اصلاً JSON معتبر نیست.
+- **۲ timestamp خراب**: یکی بدون timezone (‏`2025-06-01T08:00:05`) و یکی تاریخ ناممکن (‏`2025-06-31T08:04:10Z` — ژوئن ۳۰ روز دارد).
+- **۲ مقدار sentinel**: دمای `1000000` و لرزش `-9999`. این‌ها آشکارا کد خطای دستگاه‌اند، نه اندازه‌گیری واقعی.
+- **فیلدهای گم‌شده/null**: یک `value` null، یک `metric` null، یک `deviceId` غایب و یک `deviceId` خالی، یک `seq` null، و یک `value` رشته‌ای `"NaN"`.
+- فایل **بر اساس زمان مرتب نیست** (حدود نیمی از جفت‌خط‌های مجاور از نظر زمانی برعکس‌اند).
 
-- **Duplicates — first occurrence wins.** The task defines identity as the quadruple
-  `(deviceId, metric, ts, seq)`, so a second arrival of the same key is dropped. For the
-  8 conflicting duplicates there is no way to know which value is the "true" one, so I
-  picked a deterministic rule (keep the first, which in a streaming scenario is the one
-  that arrived first) and log a warning with the line number whenever the dropped copy
-  had a different value. Ingestion is therefore idempotent: feeding the same file twice
-  stores nothing new.
-- **Invalid records are rejected, counted per reason and logged — never crash.** A record
-  must have a non-empty `deviceId` and `metric`, a strict ISO-8601 UTC timestamp (an
-  explicit `Z`; a timestamp without a timezone is ambiguous, so I reject it rather than
-  guess), a finite numeric `value` and a non-negative integer `seq`.
-- **Sentinel values are rejected as implausible.** All real values in this dataset live
-  in small ranges (temperature ~60–80, pressure ~0–15, vibration ~0–7), so I use a coarse
-  sanity bound of |value| ≤ 1000. Keeping `1000000` in the data would make every average
-  useless. In a production system this bound would be configured per metric instead of
-  being a single constant.
-- **Out-of-order data**: nothing needs to be pre-sorted. The aggregator computes the
-  bucket index from the timestamp itself, so input order is irrelevant (there is a test
-  asserting shuffled and sorted input give the same result).
+## سیاست‌های پاک‌سازی و دلیل‌شان
 
-## Architecture
+- **تکراری‌ها — اولین رخداد برنده است.** صورت مسئله هویت را چهارتایی `(deviceId, metric, ts, seq)` تعریف کرده، پس رسیدن دوباره همان کلید حذف می‌شود. برای ۸ تکراریِ متعارض راهی برای تشخیص مقدار «درست» وجود ندارد؛ بنابراین یک قانون قطعی انتخاب کردم (نگه داشتن اولی، که در سناریوی استریم یعنی همان که اول رسیده) و هر جا نسخه حذف‌شده مقدار متفاوتی داشته، warning با شماره خط لاگ می‌شود. در نتیجه پردازش idempotent است: خوراندن دوباره همان فایل هیچ چیز جدیدی ذخیره نمی‌کند.
+- **رکوردهای نامعتبر رد و به تفکیک دلیل شمرده و لاگ می‌شوند — سرویس هرگز کرش نمی‌کند.** هر رکورد باید `deviceId` و `metric` غیرخالی، یک timestamp سخت‌گیرانه ISO-8601 UTC (با `Z` صریح؛ زمان بدون timezone مبهم است و به‌جای حدس زدن ردش می‌کنم)، یک `value` عددی متناهی و یک `seq` صحیح غیرمنفی داشته باشد.
+- **مقادیر sentinel به‌عنوان نامحتمل رد می‌شوند.** همه مقادیر واقعی این دیتاست در بازه‌های کوچکی هستند (دما حدود ۶۰–۸۰، فشار ۰–۱۵، لرزش ۰–۷)، پس یک حد ساده |value| ≤ 1000 گذاشته‌ام. نگه داشتن `1000000` در داده‌ها هر میانگینی را بی‌معنا می‌کرد. در یک سیستم واقعی این حد باید به ازای هر متریک قابل تنظیم باشد، نه یک ثابت.
+- **داده‌های خارج از ترتیب**: نیازی به مرتب‌سازی قبلی نیست. تجمیع‌گر ایندکس باکت را از خود timestamp حساب می‌کند، پس ترتیب ورودی بی‌اثر است (تستی هم هست که برابری نتیجه ورودی مرتب و درهم را چک می‌کند).
 
-Three small projects plus tests, dependencies pointing inwards:
+## معماری
+
+سه پروژه کوچک به‌علاوه تست‌ها؛ وابستگی‌ها همیشه به سمت داخل:
+
+<div dir="ltr">
 
 ```
-SensorReadings.Domain          <- entities, validation, dedup policy, aggregation, ports
-SensorReadings.Infrastructure  <- jsonl file source, in-memory repository
-SensorReadings.Api             <- controllers, DTOs, swagger, composition root
+SensorReadings.Domain          <- موجودیت‌ها، اعتبارسنجی، سیاست تکراری‌ها، تجمیع، پورت‌ها
+SensorReadings.Infrastructure  <- خواندن فایل jsonl، مخزن in-memory
+SensorReadings.Api             <- کنترلرها، DTOها، Swagger، نقطه اتصال (DI)
 tests/SensorReadings.Domain.Tests
 ```
 
-I went with a classic layered/clean style, but deliberately small: no MediatR, no generic
-repositories, no CQRS. For a service of this size those would be ceremony, not
-architecture. What I did keep strict:
+</div>
 
-- **All business rules live in the domain.** Validation is inside `SensorReading.TryCreate`
-  (an invalid `SensorReading` cannot exist), the duplicate policy is `ReadingDeduplicator`,
-  and the bucket math is `TimeBucketAggregator`. Controllers only bind/translate HTTP, and
-  the repository is a dumb store — it never decides what is a duplicate.
-- **The domain knows nothing about files, JSON or HTTP.** It depends on two small ports,
-  `IReadingSource` and `IReadingRepository`. That is also why the tests need no
-  infrastructure at all.
+سبک لایه‌ای/کلین کلاسیک را انتخاب کردم، ولی عمداً کوچک: بدون MediatR، بدون Generic Repository، بدون CQRS. برای سرویسی در این اندازه، آن‌ها تشریفات‌اند نه معماری. چیزی که سفت و سخت رعایت شده:
 
-Extensibility, concretely:
+- **همه قواعد کسب‌وکار در دامنه هستند.** اعتبارسنجی داخل `SensorReading.TryCreate` است (یعنی `SensorReading` نامعتبر اصلاً نمی‌تواند وجود داشته باشد)، سیاست تکراری‌ها در `ReadingDeduplicator` و محاسبات باکت در `TimeBucketAggregator`. کنترلرها فقط HTTP را bind و ترجمه می‌کنند و ریپازیتوری یک انبار ساده است — هیچ‌وقت تصمیم نمی‌گیرد چه چیزی تکراری است.
+- **دامنه چیزی از فایل، JSON یا HTTP نمی‌داند.** فقط به دو پورت کوچک وابسته است: `IReadingSource` و `IReadingRepository`. به همین دلیل هم تست‌ها به هیچ زیرساختی نیاز ندارند.
 
-- *New input source* (broker, HTTP feed): implement `IReadingSource`, register it in
-  `Program.cs`. `IngestionService` and everything below it stay untouched.
-- *New storage* (SQLite, Postgres): implement `IReadingRepository`.
-- *New aggregation* (sum, median, percentile): the bucket grouping and the statistics are
-  computed in exactly one place (`TimeBucketAggregator`), so a new statistic is a change
-  in that one file plus the DTO. I considered a strategy interface per aggregate function
-  but decided it wasn't paying for itself yet — count/avg/min/max share one pass over the
-  data, and a median would need the per-bucket values anyway, which is a local change.
+توسعه‌پذیری، به‌طور مشخص:
 
-## Storage choice
+- *منبع ورودی جدید* (بروکر پیام، فید HTTP): پیاده‌سازی `IReadingSource` و ثبت آن در `Program.cs`. سرویس پردازش و پایین‌ترش دست نمی‌خورند.
+- *ذخیره‌سازی جدید* (SQLite، Postgres): پیاده‌سازی `IReadingRepository`.
+- *تجمیع جدید* (sum، median، percentile): گروه‌بندی باکت‌ها و محاسبه آمار دقیقاً در یک نقطه است (`TimeBucketAggregator`)، پس یک آماره جدید یعنی تغییر در همان یک فایل به‌علاوه DTO. یک اینترفیس استراتژی به ازای هر تابع آماری را بررسی کردم ولی هنوز هزینه‌اش را توجیه نمی‌کرد — count/avg/min/max در یک پاس مشترک حساب می‌شوند و median هم به مقادیر هر باکت نیاز دارد که باز تغییری محلی است.
 
-**In-memory** (a dictionary of `(deviceId, metric)` → list of readings).
+## انتخاب ذخیره‌سازی
 
-Reasons: the dataset is ~2,000 rows and read-only after startup; there is no persistence
-requirement; and any database here would only add setup friction for the reviewer.
-Because the repository is behind an interface, swapping in SQLite later is a one-file,
-one-registration change — the ingestion and aggregation logic would not notice.
+**In-memory** (یک دیکشنری از `(deviceId, metric)` ← لیست قرائت‌ها).
 
-Trade-offs I'm accepting:
+دلایل: دیتاست حدود ۲ هزار سطر است و بعد از استارت فقط خوانده می‌شود؛ الزامی برای ماندگاری داده وجود ندارد؛ و هر دیتابیسی اینجا فقط زحمت راه‌اندازی برای بازبین اضافه می‌کرد. چون ریپازیتوری پشت اینترفیس است، جایگزینی بعدی با SQLite یک فایل و یک خط ثبت DI است — منطق پردازش و تجمیع متوجه تغییر نمی‌شوند.
 
-- Data is re-ingested on every start (cheap at this size, and it makes runs reproducible).
-- Grouping by device/metric means a query only scans its own series. Within a series the
-  range filter is a linear scan, O(n) per query — fine for thousands of readings. With
-  millions I would keep each series sorted and binary-search the range boundaries, or move
-  to a real store with an index on `(deviceId, metric, ts)`.
-- Ingestion itself is streaming (`File.ReadLines`, line by line) with O(1) memory besides
-  the stored result and the dedup key set.
+بده‌بستان‌هایی که پذیرفته‌ام:
 
-## Assumptions
+- داده‌ها در هر استارت دوباره پردازش می‌شوند (در این اندازه ارزان است و اجراها را تکرارپذیر می‌کند).
+- گروه‌بندی بر اساس دستگاه/متریک یعنی هر کوئری فقط سریِ خودش را اسکن می‌کند. داخل هر سری، فیلتر بازه یک اسکن خطی O(n) است — برای چند هزار قرائت مناسب. با میلیون‌ها رکورد، هر سری را مرتب نگه می‌داشتم و مرز بازه را با جست‌وجوی دودویی پیدا می‌کردم، یا سراغ یک ذخیره‌ساز واقعی با ایندکس روی `(deviceId, metric, ts)` می‌رفتم.
+- خودِ خواندن فایل استریم است (`File.ReadLines`، خط به خط) و به‌جز نتیجه ذخیره‌شده و مجموعه کلیدهای تکراری، حافظه O(1) مصرف می‌کند.
 
-- The reading with an empty `deviceId` (`""`) is invalid rather than a legitimate device
-  with an odd name.
-- Timestamps must be UTC with an explicit `Z`, per the task's field definition.
-- Seconds-level timestamp precision (the format in the file); fractional seconds would be
-  a one-line format change.
-- Duplicate detection state is per ingestion run, which is enough here because ingestion
-  happens once at startup from a single source.
+## فرضیات
+
+- قرائتی که `deviceId` آن رشته خالی است نامعتبر تلقی می‌شود، نه دستگاهی واقعی با نام عجیب.
+- طبق تعریف فیلد در صورت مسئله، timestampها باید UTC با `Z` صریح باشند.
+- دقت زمانی در حد ثانیه (فرمت موجود در فایل)؛ پشتیبانی از کسر ثانیه یک تغییر یک‌خطی در فرمت است.
+- وضعیت تشخیص تکراری‌ها به ازای هر اجرای پردازش نگه داشته می‌شود که برای اینجا کافی است، چون پردازش یک بار هنگام استارت و از یک منبع انجام می‌شود.
+
+</div>
