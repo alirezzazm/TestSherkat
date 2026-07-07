@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SensorReadings.Api/SensorReadings.Api.csproj" />
+    <Project Path="src/SensorReadings.Domain/SensorReadings.Domain.csproj" />
+    <Project Path="src/SensorReadings.Infrastructure/SensorReadings.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SensorReadings.Domain.Tests/SensorReadings.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
