@@ -1,6 +1,17 @@
 @SensorReadings.Api_HostAddress = http://localhost:5280
 
-GET {{SensorReadings.Api_HostAddress}}/weatherforecast/
+# Count report of the startup ingestion run
+GET {{SensorReadings.Api_HostAddress}}/api/ingestion/report
 Accept: application/json
 
 ###
+
+# 5-minute buckets over the whole file for one device/metric
+GET {{SensorReadings.Api_HostAddress}}/api/aggregations?deviceId=PUMP-01&metric=temperature&from=2025-06-01T08:00:00Z&to=2025-06-01T08:35:00Z&bucketSeconds=300
+Accept: application/json
+
+###
+
+# Invalid range -> 400
+GET {{SensorReadings.Api_HostAddress}}/api/aggregations?deviceId=PUMP-01&metric=temperature&from=2025-06-01T09:00:00Z&to=2025-06-01T08:00:00Z
+Accept: application/json
